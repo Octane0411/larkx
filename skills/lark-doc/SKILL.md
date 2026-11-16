@@ -1,50 +1,37 @@
 ---
 name: lark-doc
-description: "飞书云文档（Docx / Wiki）内容操作：通过标准 Markdown 同步文档（docs push / docs pull），或读写结构化内容、管理图片附件与画板。用户提供文档 URL/token（包括 /docx/、/wiki/）或需要将本地 Markdown 与飞书文档同步时使用。表格或 Base 内部数据操作不在本 skill。"
+description: "飞书云文档（Docx / Wiki）内容操作：通过标准 Markdown 同步文档（docs push / docs pull），或读写结构化内容与管理附件。用户提供文档 URL/token（包括 /docx/、/wiki/）或需要将本地 Markdown 与飞书文档同步时使用。表格或 Base 内部数据操作不在本 skill。"
 metadata:
   requires:
     bins: ["lark-cli"]
-    skills: ["lark-shared"]
   cliHelp: "lark-cli docs --help;lark-cli mindnotes --help"
 ---
 
 # docs
 
-## 核心原则
+## 核心原则（写作与搬运解耦）
 
-- **飞书文档只作为内容同步与读写载体**：保持用户或本地 Markdown 草稿的原始文风、措辞与结构，不套用任何内置写作模板或体裁规范。
-- **身份**：文档操作默认优先使用当前登录用户身份（`--as user`）。
+1. **先写纯标准 Markdown，再原封不动推送**：新建或整篇更新飞书文档时，先像写普通本地技术文档一样写好 `.md`，保持自然克制的文风与排版（**不要为了“适应飞书”额外加 `<callout>`、颜色等标签，不要把每个数字都加粗，也不要在动笔前阅读 `lark-doc-xml.md`、`lark-doc-update.md` 或 `lark-doc-whiteboard.md`**）。
+2. **一条命令完成同步**：定稿后直接运行 `lark-cli docs push <file.md>`（或 `larkx docs push <file.md>`）；工具会自动提取首行 `# 标题` / YAML frontmatter `title`、上传任意相对/绝对/`file://` 本地图片并安全转义正文裸 `<`。命令返回 `ok: true` 即交付完成，**无需再跑多轮 `docs +fetch` + `docs +update` 微调排版**。
+3. **身份**：文档操作默认优先使用当前登录用户身份（`--as user`）。
 
-## 命令选择
+## 首选命令：标准 Markdown 同步
 
-### 1. 标准 Markdown 同步（默认首选）
+- **推送本地 Markdown 新建或更新飞书文档 — `docs push`（`+push`）**：
+  - `lark-cli docs push <file.md>`：新建飞书文档（自动提取 `# 一级标题` 或 frontmatter `title`）。
+  - `lark-cli docs push <file.md> --doc "<Docx/Wiki URL 或 token>"`：覆盖更新已有文档（`--mode append` 可改为文末追加）。
+  - `lark-cli docs push <file.md> --title "..." --keep-h1`：自定义文档标题并同时保留正文一级标题。
+- **拉取飞书文档为干净标准 Markdown — `docs pull`（`+pull`）**：
+  - `lark-cli docs pull "<Docx/Wiki URL 或 token>" -o <file.md> --download-media`：导出标准 Markdown（自动还原 `# Title`、去除多余反斜杠转义，并下载文档内图片到本地目录）。
 
-- **本地 Markdown 新建或覆盖同步到飞书 — `docs push`（`+push`）**：
-  - `larkx docs push <file.md>`：新建飞书文档（自动提取 `# 一级标题` 或 frontmatter `title` 作为文档标题，上传本地相对/绝对/`file://` 路径图片，自动转义正文裸 `<`）。
-  - `larkx docs push <file.md> --doc "<Docx/Wiki URL 或 token>"`：覆盖更新已有文档（`--mode append` 可改为文末追加）。
-- **飞书文档拉取为干净标准 Markdown — `docs pull`（`+pull`）**：
-  - `larkx docs pull "<Docx/Wiki URL 或 token>" -o <file.md> --download-media`：导出标准 Markdown（自动还原 `# Title`、去掉多余反斜杠转义，并下载图片到本地目录）。
+## 按需参考（仅在局部编辑已有文档或用户明确指定扩展块时查阅）
 
-### 2. 读取与局部编辑
-
-- **读取 / 摘要 / 评论上下文 — [`+fetch`](references/lark-doc-fetch.md)**：支持按 `outline`、`section`、`range`、`keyword` 局部读取。
-- **创建（原生 XML / Markdown）— [`+create`](references/lark-doc-create.md)**：直接用 `--content` 传入 XML 或 Markdown 创建文档。
-- **局部精确编辑 / block 直达链接 — [`+update`](references/lark-doc-update.md)**：文本替换（`str_replace`）或块级增删改移（`block_replace`、`block_insert_after`、`block_delete`）。
-- **历史版本 — [`+history-list` / `+history-revert` / `+history-revert-status`](references/lark-doc-history.md)**：查询与回滚文档历史版本。
-
-### 3. 资源、画板与思维笔记
-
-- **插入本地素材 — [`+media-insert`](references/lark-doc-media-insert.md)**：在文末插入本地图片或附件。
-- **预览素材 — [`+media-preview`](references/lark-doc-media-preview.md)**：预览文档或评论中的图片与附件。
-- **下载素材 — [`+media-download`](references/lark-doc-media-download.md)**：下载文档中的图片、附件或画板缩略图。
-- **Docx 封面 — [`+resource-download` / `+resource-update` / `+resource-delete`](references/lark-doc-resource-cover.md)**：管理文档封面。
-- **画板 — [`画板语法参考`](references/lark-doc-whiteboard.md)**：在文档中插入 Mermaid / PlantUML / SVG 画板；编辑已有画板使用 [`lark-whiteboard`](../lark-whiteboard/SKILL.md)。
-- **思维笔记 — `mindnotes`**：已有思维笔记参考 [`lark-doc-mindnote.md`](references/lark-doc-mindnote.md)。
-- **XML 与扩展块语法（仅需 Callout / Grid / 扩展块时查阅）**：[`lark-doc-xml.md`](references/lark-doc-xml.md)、[`lark-doc-xml-extended-blocks.md`](references/lark-doc-xml-extended-blocks.md)、[`lark-doc-md.md`](references/lark-doc-md.md)。
-
-### 认证与 Scope
-
-仅在遇到未认证、token 或 scope 错误时查阅 [`lark-shared`](../lark-shared/SKILL.md)。
+- **读取 / 搜索已有文档**：[`+fetch`](references/lark-doc-fetch.md)（支持 `outline`、`section`、`range`、`keyword`）。
+- **局部改写已有文档**：[`+update`](references/lark-doc-update.md)（`str_replace`、`block_replace`、`block_insert_after`、`block_delete`）。
+- **底层原生创建**：[`+create`](references/lark-doc-create.md)。
+- **历史版本 / 媒体 / 封面 / 思维笔记**：[`+history-*`](references/lark-doc-history.md)、[`+media-insert`](references/lark-doc-media-insert.md)、[`+media-preview`](references/lark-doc-media-preview.md)、[`+media-download`](references/lark-doc-media-download.md)、[`+resource-*`](references/lark-doc-resource-cover.md)、[`lark-doc-mindnote.md`](references/lark-doc-mindnote.md)。
+- **特殊块语法（仅用户明确要求 Callout / Grid / 画板 / 扩展块时查阅）**：[`lark-doc-xml.md`](references/lark-doc-xml.md)、[`lark-doc-xml-extended-blocks.md`](references/lark-doc-xml-extended-blocks.md)、[`lark-doc-whiteboard.md`](references/lark-doc-whiteboard.md)、[`lark-doc-md.md`](references/lark-doc-md.md)。
+- **认证与权限报错排查**：仅在返回未登录或缺 scope 错误时查阅 [`lark-shared`](../lark-shared/SKILL.md)。
 
 ## 不在本 Skill 范围
 

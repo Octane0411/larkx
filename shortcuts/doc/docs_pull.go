@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -305,6 +306,22 @@ func rewritePullMediaProse(
 			i++
 			continue
 		}
+		if seg[i] == '!' && i+1 < len(seg) && seg[i+1] == '[' {
+			if img, ok := parseMarkdownImageAt(seg, i); ok && img.ReferenceLabel == "" {
+				if token, matched := extractPullMarkdownImageToken(img.Destination); matched {
+					replacement, err := downloadAndFormatPullMedia(
+						runtime, token, unescapeMarkdownText(img.Alt),
+						mdBaseDir, mediaDir, downloaded, savedFiles,
+					)
+					if err != nil {
+						return "", err
+					}
+					out.WriteString(replacement)
+					i = img.End
+					continue
+				}
+			}
+		}
 		if seg[i] == '<' && isPullImgTagStart(seg, i) {
 			if tagEnd, ok := findHTMLTagEndOutsideQuotes(seg, i); ok {
 				rawTag := seg[i:tagEnd]
@@ -381,12 +398,31 @@ func tryReplacePullImgTag(
 		return "", false, nil
 	}
 	token := firstNonEmptyTagAttr(tag, "token", "src", "file_token", "img_key", "href")
-	lowerTok := strings.ToLower(token)
-	if token == "" || strings.HasPrefix(lowerTok, "http://") || strings.HasPrefix(lowerTok, "https://") || strings.HasPrefix(lowerTok, "data:") || strings.HasPrefix(token, "@") {
-		return "", false, nil
+	if mapped, ok := extractPullMarkdownImageToken(token); ok {
+		token = mapped
+	} else {
+		lowerTok := strings.ToLower(token)
+		if token == "" || strings.HasPrefix(lowerTok, "http://") || strings.HasPrefix(lowerTok, "https://") || strings.HasPrefix(lowerTok, "data:") || strings.HasPrefix(token, "@") {
+			return "", false, nil
+		}
 	}
 	alt := firstNonEmptyTagAttr(tag, "alt", "caption", "title", "name")
+	formatted, err := downloadAndFormatPullMedia(runtime, token, alt, mdBaseDir, mediaDir, downloaded, savedFiles)
+	if err != nil {
+		return "", false, err
+	}
+	return formatted, true, nil
+}
 
+func downloadAndFormatPullMedia(
+	runtime *common.RuntimeContext,
+	token string,
+	alt string,
+	mdBaseDir string,
+	mediaDir string,
+	downloaded map[string]string,
+	savedFiles *[]string,
+) (string, error) {
 	localPath, ok := downloaded[token]
 	if !ok {
 		apiPath := fmt.Sprintf("/open-apis/drive/v1/medias/%s/download", validate.EncodePathSegment(token))
@@ -395,18 +431,18 @@ func tryReplacePullImgTag(
 			ApiPath:    apiPath,
 		})
 		if err != nil {
-			return "", false, withDocMediaDownloadRecoveryHint(wrapDocNetworkErr(err, "download media %q failed: %v", token, err), "media")
+			return "", withDocMediaDownloadRecoveryHint(wrapDocNetworkErr(err, "download media %q failed: %v", token, err), "media")
 		}
 		imgBytes, readErr := io.ReadAll(io.LimitReader(resp.Body, common.MaxDriveMediaUploadSinglePartSize+1))
 		closeErr := resp.Body.Close()
 		if readErr != nil {
-			return "", false, errs.NewInternalError(errs.SubtypeUnknown, "read downloaded media %q failed: %v", token, readErr).WithCause(readErr)
+			return "", errs.NewInternalError(errs.SubtypeUnknown, "read downloaded media %q failed: %v", token, readErr).WithCause(readErr)
 		}
 		if closeErr != nil {
-			return "", false, errs.NewInternalError(errs.SubtypeUnknown, "close downloaded media stream %q failed: %v", token, closeErr).WithCause(closeErr)
+			return "", errs.NewInternalError(errs.SubtypeUnknown, "close downloaded media stream %q failed: %v", token, closeErr).WithCause(closeErr)
 		}
 		if int64(len(imgBytes)) > common.MaxDriveMediaUploadSinglePartSize {
-			return "", false, errs.NewValidationError(errs.SubtypeInvalidArgument, "downloaded media %q exceeds 20 MiB", token)
+			return "", errs.NewValidationError(errs.SubtypeInvalidArgument, "downloaded media %q exceeds 20 MiB", token)
 		}
 
 		basePath := filepath.Join(mediaDir, sanitizeMediaToken(token))
@@ -415,10 +451,10 @@ func tryReplacePullImgTag(
 			finalPath += sniffImageExtension(imgBytes)
 		}
 		if err := vfs.MkdirAll(filepath.Dir(finalPath), 0o755); err != nil {
-			return "", false, errs.NewInternalError(errs.SubtypeUnknown, "create media directory failed: %v", err).WithCause(err)
+			return "", errs.NewInternalError(errs.SubtypeUnknown, "create media directory failed: %v", err).WithCause(err)
 		}
 		if err := localfileio.AtomicWrite(finalPath, imgBytes, 0o644); err != nil {
-			return "", false, errs.NewInternalError(errs.SubtypeUnknown, "write media file %q failed: %v", finalPath, err).WithCause(err)
+			return "", errs.NewInternalError(errs.SubtypeUnknown, "write media file %q failed: %v", finalPath, err).WithCause(err)
 		}
 		localPath = finalPath
 		downloaded[token] = localPath
@@ -431,7 +467,37 @@ func tryReplacePullImgTag(
 	}
 	linkTarget = filepath.ToSlash(linkTarget)
 	escapedAlt := strings.ReplaceAll(alt, "]", `\]`)
-	return fmt.Sprintf("![%s](%s)", escapedAlt, linkTarget), true, nil
+	return fmt.Sprintf("![%s](%s)", escapedAlt, linkTarget), nil
+}
+
+func extractPullMarkdownImageToken(dest string) (string, bool) {
+	trimmed := strings.TrimSpace(dest)
+	if len(trimmed) >= 2 && trimmed[0] == '<' && trimmed[len(trimmed)-1] == '>' {
+		trimmed = strings.TrimSpace(trimmed[1 : len(trimmed)-1])
+	}
+	u, err := url.Parse(trimmed)
+	if err != nil {
+		return "", false
+	}
+	scheme := strings.ToLower(u.Scheme)
+	if scheme != "http" && scheme != "https" {
+		return "", false
+	}
+	host := strings.ToLower(u.Hostname())
+	isLarkHost := host == "feishu.cn" || strings.HasSuffix(host, ".feishu.cn") ||
+		host == "larksuite.com" || strings.HasSuffix(host, ".larksuite.com") ||
+		host == "larkoffice.com" || strings.HasSuffix(host, ".larkoffice.com")
+	if !isLarkHost {
+		return "", false
+	}
+	segments := strings.Split(strings.Trim(u.Path, "/"), "/")
+	if len(segments) == 2 && segments[0] == "file" && segments[1] != "" {
+		return segments[1], true
+	}
+	if len(segments) == 6 && segments[0] == "open-apis" && segments[1] == "drive" && segments[2] == "v1" && segments[3] == "medias" && segments[5] == "download" && segments[4] != "" {
+		return segments[4], true
+	}
+	return "", false
 }
 
 func firstNonEmptyTagAttr(tag localDocResourceTag, names ...string) string {

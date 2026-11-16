@@ -1,6 +1,6 @@
 # Markdown 格式参考
 
-适用于标准 Markdown 同步（`docs push` / `docs pull`）以及原生 `docs +fetch` / `docs +create` / `docs +update --doc-format markdown`。使用 `docs push` 时，工具会自动完成首行 `# Title` 提取、本地任意路径图片上传以及非代码块/公式区裸 `<` 的转义。
+> **默认推荐直接用 `docs push` / `docs pull`**：标准 Markdown 中的特殊符号（如 `$500`、`<tag>`）和任意路径本地图片（相对路径、绝对路径、`file://`）都会由 `docs push` 自动处理，**无需**查阅下方的手工转义表，也**不受** `@./` 当前目录限制。下方规则仅在直接调用底层 `docs +create` / `docs +update --doc-format markdown`（如 `str_replace`）时才需参考。
 
 ## 原生 `--doc-format markdown` 转义规则
 
