@@ -39,6 +39,7 @@ var DocsPush = common.Shortcut{
 	Description:       "Push standard Markdown to a Lark document",
 	Risk:              "write",
 	AuthTypes:         []string{"user", "bot"},
+	Scopes:            []string{},
 	ConditionalScopes: docsPushConditionalScopes,
 	PostMount:         configureDocsPushCommand,
 	Flags: []common.Flag{

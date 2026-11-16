@@ -718,13 +718,12 @@ func TestReleaseSkillContract_ExecutableCreateCommandsMatchAppTypeReasonPolicy(t
 		t.Fatal("lark-apps skill must expose at least one executable release-create command")
 	}
 	wantReasonless := map[string]bool{
-		"../../skills/lark-apps/creative-design/creative-design.md\x00lark-cli apps +release-create --app-id <app_id> --as user":                        true,
 		"../../skills/lark-apps/references/lark-apps-local-dev.md\x00lark-cli apps +release-create --app-id app_xxx":                                    true,
 		"../../skills/lark-apps/references/lark-apps-local-dev.md\x00lark-cli apps +release-create --as user --app-id <app_id> --branch sprint/default": true,
 		"../../skills/lark-apps/references/lark-apps-release-create.md\x00lark-cli apps +release-create --app-id app_xxx":                               true,
 	}
 	if len(reasonless) != len(wantReasonless) {
-		t.Fatalf("reasonless release-create commands = %v, want only the four html examples", reasonless)
+		t.Fatalf("reasonless release-create commands = %v, want only the three html examples", reasonless)
 	}
 	for command := range wantReasonless {
 		if !reasonless[command] {

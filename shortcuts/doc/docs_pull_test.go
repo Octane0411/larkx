@@ -149,7 +149,7 @@ func TestDocsPullDownloadMediaRewritesFeishuFileMarkdownLinks(t *testing.T) {
 						"<title>Links Doc</title>",
 						"",
 						"![图1](https://feishu.cn/file/XzYsbfPRFoGZxlxYnTMcx617ncc)",
-						"![图2](https://bytedance.larkoffice.com/file/BoxTok2)",
+						"![图2](https://example.larkoffice.com/file/BoxTok2)",
 						"![ext](https://example.com/keep.png)",
 					}, "\n"),
 				},

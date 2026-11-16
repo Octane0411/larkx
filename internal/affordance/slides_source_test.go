@@ -33,25 +33,21 @@ var slidesShortcutReferences = map[string][]string{
 	"+history-revert-status": {"lark-slides/references/cli/lark-slides-history.md"},
 	"+replace-slide": {
 		"lark-slides/references/cli/lark-slides-replace-slide.md",
-		"lark-slides/references/workflow/slides-editing.md",
 		"lark-slides/references/xml/xml-schema-quick-ref.md",
 	},
 	"+update-slide": {
 		"lark-slides/references/cli/lark-slides-update-slide.md",
-		"lark-slides/references/workflow/slides-editing.md",
 		"lark-slides/references/xml/xml-schema-quick-ref.md",
 	},
 	// +update is the hidden alias of +update-slide; keep its routes in sync.
 	"+update": {
 		"lark-slides/references/cli/lark-slides-update-slide.md",
-		"lark-slides/references/workflow/slides-editing.md",
 		"lark-slides/references/xml/xml-schema-quick-ref.md",
 	},
 	// +replace-pages is deprecated in favor of +update-slide, so it routes to
 	// the replacement's docs.
 	"+replace-pages": {
 		"lark-slides/references/cli/lark-slides-update-slide.md",
-		"lark-slides/references/workflow/slides-editing.md",
 		"lark-slides/references/xml/xml-schema-quick-ref.md",
 	},
 }

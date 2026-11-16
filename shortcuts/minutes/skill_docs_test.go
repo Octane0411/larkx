@@ -106,13 +106,10 @@ func hasFlag(flags []common.Flag, want string) bool {
 	return false
 }
 
-// TestMeetingSummaryWorkflowDocumentsMinuteTokenFallback pins the fallback that
-// issue #2379 found missing: the meeting-summary workflow used to tell the agent
-// to report "无纪要" whenever a meeting had no note_id, even though such meetings
-// often still carry a readable minute_token. It also pins the fallback commands
-// against the flag names the shortcuts actually declare, since +detail takes the
-// plural --minute-tokens while +apply-permission takes the singular form.
-func TestMeetingSummaryWorkflowDocumentsMinuteTokenFallback(t *testing.T) {
+// TestLegacyWorkflowSkillsAreRetiredAndMinuteFlagsIntact verifies that legacy
+// workflow skills remain removed while minutes detail and permission flags stay
+// consistent.
+func TestLegacyWorkflowSkillsAreRetiredAndMinuteFlagsIntact(t *testing.T) {
 	if !hasFlag(MinutesDetail.Flags, "minute-tokens") {
 		t.Fatalf("MinutesDetail flags = %v, want minute-tokens", MinutesDetail.Flags)
 	}
@@ -120,16 +117,12 @@ func TestMeetingSummaryWorkflowDocumentsMinuteTokenFallback(t *testing.T) {
 		t.Fatalf("MinutesApplyPermission flags = %v, want minute-token", MinutesApplyPermission.Flags)
 	}
 
-	workflow := readSkillDoc(t, "skills/lark-workflow-meeting-summary/SKILL.md")
-	for _, must := range []string{
-		"minutes +detail --minute-tokens",
-		"minutes +apply-permission --minute-token ",
-		"--transcript",
-		"--output-dir",
-		"No read permission",
+	for _, retired := range []string{
+		"../../skills/lark-workflow-meeting-summary",
+		"../../skills/lark-workflow-standup-report",
 	} {
-		if !strings.Contains(workflow, must) {
-			t.Errorf("lark-workflow-meeting-summary/SKILL.md must cover %q so a missing note_id is not reported as 无纪要", must)
+		if _, err := os.Stat(retired); !os.IsNotExist(err) {
+			t.Fatalf("%s should remain removed in larkx, stat err=%v", retired, err)
 		}
 	}
 }
