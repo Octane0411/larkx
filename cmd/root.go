@@ -613,7 +613,7 @@ const (
 // projection, so a concealed build can omit a now-empty heading.
 func classifyRootCommands(root *cobra.Command) {
 	tooling := map[string]bool{"api": true, "schema": true, "skills": true}
-	management := map[string]bool{"auth": true, "config": true, "profile": true, "doctor": true, "update": true}
+	management := map[string]bool{"auth": true, "config": true, "profile": true, "doctor": true, "update": true, "takeover": true}
 	for _, c := range root.Commands() {
 		if c.GroupID != "" {
 			continue

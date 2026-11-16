@@ -160,11 +160,11 @@ JSON
 
 ⚠️ **新增行的边框/样式避免用 `{}` 跳过**：`cells` 数组里 `{}` 的语义是"**此单元格不做任何修改、保留原状态**"。这在写入**已有行**时是安全的（原有边框/样式保持不变），但在写入**新行**（比如表尾追加汇总行、扩展行）时是灾难：新行底子里本来就没边框，`{}` 不修改 = 保留无边框状态，导致该 cell 视觉断裂。
 
-⚠️ **"汇总行"识别 → 读 `references/lark-sheets-visual-standards.md` 拿完整样式规范**：下述双重条件**同时满足**才是汇总行，避免仅凭"有 AVERAGE"就判定：
+⚠️ **"汇总行"识别**：下述双重条件**同时满足**才是汇总行，避免仅凭"有 AVERAGE"就判定：
 - **语义信号**（二选一）：用户 prompt 含"合计/汇总/总计/统计/各科平均分/最下面加一行算…/底部总计"等意图词；或上下文明确是"表尾追加一行做聚合"
 - **结构信号**：新行全行都在做聚合（含 `=SUM/AVERAGE/COUNT/MAX/MIN/SUBTOTAL(...)`，支持 IFERROR 包裹），**不是**单个 cell 算个参考值或每行都算的派生列
 
-满足上述时，**不要在本文里猜样式**，直接去读 `references/lark-sheets-visual-standards.md` 的「场景一 → 1A. 添加汇总行 / 表头行」章节，按那里的样式要点配齐 `font.bold / horizontal_alignment / background_color / border_styles`。
+满足上述时，按需为汇总行配置 `font.bold`、`horizontal_alignment`、`background_color`、`border_styles`。
 
 反例（**不是**汇总行，避免自动加粗）：
 - 用户说"在 H5 帮我算个 AVERAGE 参考"→ 单 cell 计算
@@ -173,7 +173,7 @@ JSON
 
 **正确做法**（二选一）：
 
-- **做法 A（推荐）**：先按正确类型写 value / formula，再用 `+cells-set-style` 或 `+styles-put` 对整行补齐 `cell_styles` + `border_styles`；不要用 `--copy-to-range` 纯刷样式。汇总行的 bold / 背景色 / 上边框见 `references/lark-sheets-visual-standards.md` 的「场景一 → 1A. 添加汇总行 / 表头行」。
+- **做法 A（推荐）**：先按正确类型写 value / formula，再用 `+cells-set-style` 或 `+styles-put` 对整行补齐 `cell_styles` + `border_styles`；不要用 `--copy-to-range` 纯刷样式。
 - **做法 B**：一次写入，但每个 cell（含空白格）都显式带 `cell_styles` + `border_styles`，**不能用 `{}`**。
 
 **判断是不是"新行"**：写入 range 超出 `+csv-get` 返回的 `current_region` 右 / 下边界（如 `current_region=A1:H10`、写 `A11:H11`）即新行，建议按上述做法补边框。

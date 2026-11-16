@@ -1549,7 +1549,11 @@ func registerShortcutFlagsWithContext(ctx context.Context, cmd *cobra.Command, f
 			}
 			cmd.Flags().StringSlice(fl.Name, values, desc)
 		default:
-			cmd.Flags().String(fl.Name, fl.Default, desc)
+			if fl.Shorthand != "" {
+				cmd.Flags().StringP(fl.Name, fl.Shorthand, fl.Default, desc)
+			} else {
+				cmd.Flags().String(fl.Name, fl.Default, desc)
+			}
 		}
 		if fl.Hidden {
 			_ = cmd.Flags().MarkHidden(fl.Name)

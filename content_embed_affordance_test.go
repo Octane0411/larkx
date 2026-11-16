@@ -42,10 +42,37 @@ func TestEmbeddedDocsAffordanceComplementsShortcutMetadata(t *testing.T) {
 			},
 			skills: []string{
 				"lark-doc",
-				"lark-doc/references/lark-doc-create-workflow.md",
 				"lark-doc/references/lark-doc-create.md",
 				"lark-doc/references/lark-doc-xml.md",
 				"lark-doc/references/lark-doc-md.md",
+			},
+		},
+		"+push": {
+			description: "Push standard Markdown to a Lark document",
+			useWhen: []string{
+				"Create or update a Lark document directly from standard Markdown, resolving local images automatically.",
+			},
+			tips: []string{
+				"Pass a local Markdown file (`larkx docs push <file.md>`) to create a document, or pass `--doc <url|token>` to overwrite/append (`--mode overwrite|append`).",
+				"Extracts YAML frontmatter `title` or leading `# H1` into the document title, uploads local relative/absolute/`file://` images, and preserves code blocks, inline code, and `$...$` math.",
+			},
+			skills: []string{
+				"lark-doc",
+				"lark-doc/references/lark-doc-md.md",
+			},
+		},
+		"+pull": {
+			description: "Pull a Lark document as clean standard Markdown",
+			useWhen: []string{
+				"Fetch a Lark document as clean standard Markdown, optionally downloading embedded images.",
+			},
+			tips: []string{
+				"Use `larkx docs pull <url|token> -o <file.md> --download-media` to save clean Markdown and local assets.",
+				"Without `-o`, prints clean Markdown directly to stdout (unless `--format json` or `--json` is passed).",
+			},
+			skills: []string{
+				"lark-doc",
+				"lark-doc/references/lark-doc-fetch.md",
 			},
 		},
 		"+fetch": {

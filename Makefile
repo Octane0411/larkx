@@ -1,10 +1,11 @@
 # Copyright (c) 2026 Lark Technologies Pte. Ltd.
 # SPDX-License-Identifier: MIT
 
-BINARY   := lark-cli
+BINARY   := larkx
 MODULE   := github.com/larksuite/cli
 VERSION  := $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 DATE     := $(shell date +%Y-%m-%d)
+LOCAL_BIN ?= $(HOME)/.local/bin
 NODE     ?= node
 QUALITY_GATE_CHANGED_FROM ?= $(shell bash scripts/resolve-changed-from.sh)
 QUALITY_GATE_CHANGED_FROM_RESOLVED = $(if $(strip $(QUALITY_GATE_CHANGED_FROM)),$(QUALITY_GATE_CHANGED_FROM),$(shell bash scripts/resolve-changed-from.sh))
@@ -23,7 +24,7 @@ PREFIX   ?= /usr/local
 TEST_GOARCH := $(or $(GOARCH),$(shell go env GOARCH))
 RACE_FLAG := $(if $(filter riscv64,$(TEST_GOARCH)),,-race)
 
-.PHONY: all build vet fmt-check script-test test unit-test live-skills-test integration-test examples-build quality-gate install uninstall clean gitleaks sidecar-test
+.PHONY: all build vet fmt-check script-test test unit-test live-skills-test integration-test examples-build quality-gate install install-local takeover untakeover uninstall clean gitleaks sidecar-test
 
 all: test
 
@@ -102,6 +103,17 @@ install: build
 	install -d $(PREFIX)/bin
 	install -m755 $(BINARY) $(PREFIX)/bin/$(BINARY)
 	@echo "OK: $(PREFIX)/bin/$(BINARY) ($(VERSION))"
+
+install-local: build
+	install -d $(LOCAL_BIN)
+	install -m755 $(BINARY) $(LOCAL_BIN)/$(BINARY)
+	@echo "OK: $(LOCAL_BIN)/$(BINARY) ($(VERSION))"
+
+takeover: install-local
+	$(LOCAL_BIN)/$(BINARY) takeover enable --bin-dir $(LOCAL_BIN)
+
+untakeover:
+	$(LOCAL_BIN)/$(BINARY) takeover disable --bin-dir $(LOCAL_BIN)
 
 uninstall:
 	rm -f $(PREFIX)/bin/$(BINARY)

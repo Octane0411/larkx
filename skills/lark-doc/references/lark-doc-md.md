@@ -1,8 +1,8 @@
 # Markdown 格式参考
 
-`docs +fetch` / `docs +create` / `docs +update` 使用 `--doc-format markdown` 时适用；fetch 的 `--doc-format im-markdown` 仅用于获取内容后在 `lark-im` 场景下使用，不作为 create/update 写入格式。
+适用于标准 Markdown 同步（`docs push` / `docs pull`）以及原生 `docs +fetch` / `docs +create` / `docs +update --doc-format markdown`。使用 `docs push` 时，工具会自动完成首行 `# Title` 提取、本地任意路径图片上传以及非代码块/公式区裸 `<` 的转义。
 
-## 转义规则
+## 原生 `--doc-format markdown` 转义规则
 
 > **⚠️ 当文本中包含以下字符且不想触发 Markdown 语法时**，需用 `\` 前缀转义。转义分为**无条件转义**（行内任意位置生效）和**位置敏感转义**（仅特定位置才需要）两类。
 

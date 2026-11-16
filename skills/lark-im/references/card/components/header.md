@@ -31,4 +31,4 @@
 
 ## 选色建议
 
-按场景选 template 颜色见 `../lark-im-card-style.md` 意图表。常见语义：green=成功/完成，orange=警告，red=错误/危险，grey=失效/归档，blue=通用信息。
+常见语义参考：green=成功/完成，orange=警告，red=错误/危险，grey=失效/归档，blue=通用信息。

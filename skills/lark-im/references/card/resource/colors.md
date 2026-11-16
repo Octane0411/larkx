@@ -31,4 +31,4 @@
 
 组件里写 `"font_color": "cus-0"`。RGBA 支持的属性同枚举（font/text_color、background_style、border_color、icon color 等）。
 
-> `column` 的 `background_style` 需客户端 v7.9+。配色搭配规则见 `../lark-im-card-style.md` 视觉规范。
+> `column` 的 `background_style` 需客户端 v7.9+。

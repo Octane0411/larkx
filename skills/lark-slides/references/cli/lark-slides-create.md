@@ -5,7 +5,7 @@
 
 提交源必须是直接生成的单页 `<slide>` XML。禁止从完整 `<presentation>` XML 解析、拆分、重序列化出 slide 数组再提交。
 
-本命令只从零创建演示文稿，没有导入本地 PPT 文件的参数。要把已有 PPTX 变成 Slides，用 `drive +import --file <x.pptx> --type slides`，再在导入结果上编辑，流程见 [template-editing.md](../workflow/template-editing.md)。
+本命令只从零创建演示文稿，没有导入本地 PPT 文件的参数。要把已有 PPTX 变成 Slides，请先用 `drive +import --file <x.pptx> --type slides` 导入，再基于导入返回的 `xml_presentation_id` 用 `slides +xml-get`、`+replace-slide` / `+update-slide` 编辑。
 
 ## 创建方式选择
 

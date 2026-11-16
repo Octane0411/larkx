@@ -1,6 +1,6 @@
 ---
 name: lark-doc
-description: "飞书云文档（Docx / Wiki）内容操作：读取、创建、编辑文档，插入或下载图片附件，以及操作思维笔记。用户提供文档 URL/token（包括 doubao.com 的 /docx/、/wiki/）时使用；按 URL 路径/token 而非域名路由；`/page/<token>` 是妙搭应用，非飞书云文档。文档内嵌资源按读取参考中的统一规则分流。独立评论操作走 lark-drive；随正文读取评论使用 docs +fetch。表格或 Base 内部数据操作不在本 skill。"
+description: "飞书云文档（Docx / Wiki）内容操作：通过标准 Markdown 同步文档（docs push / docs pull），或读写结构化内容、管理图片附件与画板。用户提供文档 URL/token（包括 /docx/、/wiki/）或需要将本地 Markdown 与飞书文档同步时使用。表格或 Base 内部数据操作不在本 skill。"
 metadata:
   requires:
     bins: ["lark-cli"]
@@ -10,40 +10,43 @@ metadata:
 
 # docs
 
-## 场景与 Shortcut 路由
+## 核心原则
 
-**CRITICAL：先判断场景，再读取该场景的参考文件；不要在任务开始时一次性读取全部参考文件。每个文件只在首次进入对应阶段时读取一次。**
+- **飞书文档只作为内容同步与读写载体**：保持用户或本地 Markdown 草稿的原始文风、措辞与结构，不套用任何内置写作模板或体裁规范。
+- **身份**：文档操作默认优先使用当前登录用户身份（`--as user`）。
 
-**身份：文档操作推荐显式指定 `--as user`。**
+## 命令选择
 
-**本地文件引用统一遵循文件访问权限：CWD 内优先使用 `@./相对路径`，其他目录使用 `@绝对路径`。XML 内的相对资源路径先查 CWD；仅文件不存在时再查源 XML 文件所在目录，同名文件以 CWD 为准。内联内容、stdin、在线文档没有源文件目录，不执行回退。**
+### 1. 标准 Markdown 同步（默认首选）
 
-### 文档内容
+- **本地 Markdown 新建或覆盖同步到飞书 — `docs push`（`+push`）**：
+  - `larkx docs push <file.md>`：新建飞书文档（自动提取 `# 一级标题` 或 frontmatter `title` 作为文档标题，上传本地相对/绝对/`file://` 路径图片，自动转义正文裸 `<`）。
+  - `larkx docs push <file.md> --doc "<Docx/Wiki URL 或 token>"`：覆盖更新已有文档（`--mode append` 可改为文末追加）。
+- **飞书文档拉取为干净标准 Markdown — `docs pull`（`+pull`）**：
+  - `larkx docs pull "<Docx/Wiki URL 或 token>" -o <file.md> --download-media`：导出标准 Markdown（自动还原 `# Title`、去掉多余反斜杠转义，并下载图片到本地目录）。
 
-- **读取 / 摘要 — [`+fetch`](references/lark-doc-fetch.md)**：先读参考再获取文档。
-- **从零创作 — [`创建工作流`](references/lark-doc-create-workflow.md)**：先完整执行创建工作流，**简单任务不是跳过的理由**；
-- **导入 / 空文档 — [`+create`](references/lark-doc-create.md)**：仅创建空文档或原样导入用户提供的完整内容时，跳过创建工作流。
-- **编辑 / block 直达链接 — [`+update`](references/lark-doc-update.md)**：语义改写、润色、重组、补写或排版均按 update 参考完成。
+### 2. 读取与局部编辑
 
-### 辅助能力
+- **读取 / 摘要 / 评论上下文 — [`+fetch`](references/lark-doc-fetch.md)**：支持按 `outline`、`section`、`range`、`keyword` 局部读取。
+- **创建（原生 XML / Markdown）— [`+create`](references/lark-doc-create.md)**：直接用 `--content` 传入 XML 或 Markdown 创建文档。
+- **局部精确编辑 / block 直达链接 — [`+update`](references/lark-doc-update.md)**：文本替换（`str_replace`）或块级增删改移（`block_replace`、`block_insert_after`、`block_delete`）。
+- **历史版本 — [`+history-list` / `+history-revert` / `+history-revert-status`](references/lark-doc-history.md)**：查询与回滚文档历史版本。
 
-- **草稿初始化、解析与统计 — [`+script`](references/lark-doc-script.md)**：支持解析文档 URL / token 与本地 XML，统计字数并返回字符诊断；不支持 Markdown 输入。
-- **历史版本 — [`+history-list` / `+history-revert` / `+history-revert-status`](references/lark-doc-history.md)**：查询、回滚文档历史版本或检查回滚任务状态。
+### 3. 资源、画板与思维笔记
 
-### 资源、画板与思维笔记
-
-- **插入本地素材 — [`+media-insert`](references/lark-doc-media-insert.md)**：在文末插入本地图片或文件。
-- **预览素材 — [`+media-preview`](references/lark-doc-media-preview.md)**：预览文档或评论中的图片、附件或素材。
-- **下载素材 — [`+media-download`](references/lark-doc-media-download.md)**：下载文档中的图片、附件、素材或画板缩略图。
-- **Docx 封面 — [`+resource-download` / `+resource-update` / `+resource-delete`](references/lark-doc-resource-cover.md)**：下载、更新或删除 Docx 封面。
-- **画板 — [`画板工作流`](references/lark-doc-whiteboard.md)**：创建或更新画板时先读取工作流；更新已有画板必须复用现有 token，禁止新建空白画板；使用 [`whiteboard +update`](../lark-whiteboard/references/lark-whiteboard-update.md) 写入。
-- **思维笔记 — `mindnotes`**：已有思维笔记走 [`思维笔记链路`](references/lark-doc-mindnote.md)；新建思维笔记走 [`lark-doc-whiteboard`](references/lark-doc-whiteboard.md)。
+- **插入本地素材 — [`+media-insert`](references/lark-doc-media-insert.md)**：在文末插入本地图片或附件。
+- **预览素材 — [`+media-preview`](references/lark-doc-media-preview.md)**：预览文档或评论中的图片与附件。
+- **下载素材 — [`+media-download`](references/lark-doc-media-download.md)**：下载文档中的图片、附件或画板缩略图。
+- **Docx 封面 — [`+resource-download` / `+resource-update` / `+resource-delete`](references/lark-doc-resource-cover.md)**：管理文档封面。
+- **画板 — [`画板语法参考`](references/lark-doc-whiteboard.md)**：在文档中插入 Mermaid / PlantUML / SVG 画板；编辑已有画板使用 [`lark-whiteboard`](../lark-whiteboard/SKILL.md)。
+- **思维笔记 — `mindnotes`**：已有思维笔记参考 [`lark-doc-mindnote.md`](references/lark-doc-mindnote.md)。
+- **XML 与扩展块语法（仅需 Callout / Grid / 扩展块时查阅）**：[`lark-doc-xml.md`](references/lark-doc-xml.md)、[`lark-doc-xml-extended-blocks.md`](references/lark-doc-xml-extended-blocks.md)、[`lark-doc-md.md`](references/lark-doc-md.md)。
 
 ### 认证与 Scope
 
-执行 Shortcut 时，不预读 [`lark-shared`](../lark-shared/SKILL.md) 或预跑 `auth status --verify`；仅遇到未认证、token / 身份或 scope 错误时读取该 Skill，修复后重试。认证、身份或 scope 管理请求则直接使用该 Skill。
+仅在遇到未认证、token 或 scope 错误时查阅 [`lark-shared`](../lark-shared/SKILL.md)。
 
 ## 不在本 Skill 范围
 
-- **Drive 文件级操作**：找文档、导入导出、云空间文件上传 / 下载 / 权限管理 → [`lark-drive`](../lark-drive/SKILL.md)。复制文档、创建副本或另存为副本时，按其指引使用 `lark-cli drive files copy`；不要用 `docs +fetch` + `docs +create` 重建正文。
-- **独立评论操作**：添加、分页查看、回复评论或增删 reaction → [`lark-drive`](../lark-drive/SKILL.md)；只需紧凑评论上下文时，直接使用默认 JSON 响应的 `docs +fetch`。
+- **Drive 文件级操作**（搜索、复制、移动、权限、独立评论）→ [`lark-drive`](../lark-drive/SKILL.md)。
+- **Wiki 空间与节点层级管理** → [`lark-wiki`](../lark-wiki/SKILL.md)。

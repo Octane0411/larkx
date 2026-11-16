@@ -20,6 +20,7 @@ import (
 	"github.com/larksuite/cli/cmd/schema"
 	"github.com/larksuite/cli/cmd/service"
 	"github.com/larksuite/cli/cmd/skill"
+	"github.com/larksuite/cli/cmd/takeover"
 	cmdupdate "github.com/larksuite/cli/cmd/update"
 	"github.com/larksuite/cli/cmd/whoami"
 	"github.com/larksuite/cli/extension/command"
@@ -497,6 +498,7 @@ func assembleInternal(
 	}, nil))
 	rootCmd.AddCommand(completion.NewCmdCompletion(f))
 	rootCmd.AddCommand(cmdupdate.NewCmdUpdate(f))
+	rootCmd.AddCommand(takeover.NewCmdTakeover(f))
 	rootCmd.AddCommand(cmdevent.NewCmdEvents(f))
 	rootCmd.AddCommand(skill.NewCmdSkill(f))
 

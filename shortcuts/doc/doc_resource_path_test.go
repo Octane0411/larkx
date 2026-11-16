@@ -112,6 +112,16 @@ func readDocResourceFixture(runtime *common.RuntimeContext, kind, path string) (
 	}
 }
 
+type staticDocResourceFileIOProvider struct {
+	fileIO fileio.FileIO
+}
+
+func (p staticDocResourceFileIOProvider) Name() string { return "test-doc-resource" }
+
+func (p staticDocResourceFileIOProvider) ResolveFileIO(context.Context) fileio.FileIO {
+	return p.fileIO
+}
+
 type deniedDocResourceFileIO struct {
 	fileio.FileIO
 	err   error
@@ -127,7 +137,7 @@ func TestDocResourcePathDoesNotFallBackOnAccessFailure(t *testing.T) {
 	for _, failure := range []error{fs.ErrPermission, &fileio.PathValidationError{Err: fs.ErrNotExist}} {
 		f, _, _, _ := cmdutil.TestFactory(t, docsTestConfigWithAppID("resource-path-denied"))
 		fio := &deniedDocResourceFileIO{FileIO: f.ResolveFileIO(context.Background()), err: failure}
-		f.FileIOProvider = docsScriptFileIOProvider{fileIO: fio}
+		f.FileIOProvider = staticDocResourceFileIOProvider{fileIO: fio}
 		runtime := common.TestNewRuntimeContextForAPI(context.Background(), &cobra.Command{
 			Use: "test", Annotations: map[string]string{docsContentPathAnnotation: "draft/document.xml"},
 		}, docsTestConfigWithAppID("resource-path-denied"), f, core.AsUser)

@@ -50,13 +50,13 @@ func validateCreateV2(_ context.Context, runtime *common.RuntimeContext) error {
 			return errs.NewValidationError(errs.SubtypeInvalidArgument,
 				"--content file %q is empty", path).
 				WithParam("--content").
-				WithHint("write non-empty XML or Markdown to this file; if the path was reserved by init-draft, use the exact data.draft_path returned by that command, then retry with --content \"@./<data.draft_path>\"")
+				WithHint("write non-empty XML or Markdown to this file, then retry with --content \"@./<path>\"")
 		}
 		if runtime.Changed("content") {
 			return errs.NewValidationError(errs.SubtypeInvalidArgument,
 				"--content was provided but is empty; an @file input may point to an empty draft").
 				WithParam("--content").
-				WithHint("write non-empty XML or Markdown to the draft and retry with --content \"@./<data.draft_path>\", or omit --content and pass --title to create a title-only document")
+				WithHint("write non-empty XML or Markdown to the draft and retry, or omit --content and pass --title to create a title-only document")
 		}
 		return errs.NewValidationError(errs.SubtypeInvalidArgument,
 			"--content is required unless --title is provided").

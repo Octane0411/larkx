@@ -254,5 +254,5 @@ lark-cli slides +replace-slide --as user \
 ## 相关命令
 
 - [slides +xml-get](lark-slides-xml-presentations-get.md) — 读原页拿 `block_id` / `revision_id`
-- [+media-upload](lark-slides-media-upload.md) — 上传图片拿 `file_token`
-- [slides-editing.md](../workflow/slides-editing.md) — 读-改-写闭环 + 决策树
+- [`+media-upload`](lark-slides-media-upload.md) — 上传图片拿 `file_token`
+- [`+update-slide`](lark-slides-update-slide.md) — 整页覆盖写回

@@ -22,9 +22,7 @@
     "lark-slides": ["演示文稿", "幻灯片", "PPT", "/slides/"],
     "lark-task": ["任务", "待办", "任务智能体", "父任务", "子任务", "负责人", "截止时间", "任务清单", "任务搜索", "多步任务", "任务提醒"],
     "lark-whiteboard": ["画板", "图表"],
-    "lark-wiki": ["知识库", "知识空间", "空间目录", "/wiki/"],
-    "lark-workflow-meeting-summary": ["会议纪要工作流", "会议纪要", "会议周报"],
-    "lark-workflow-standup-report": ["站会日报工作流"]
+    "lark-wiki": ["知识库", "知识空间", "空间目录", "/wiki/"]
   },
   "guideRewrite": {
     "pathOverrides": [

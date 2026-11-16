@@ -601,19 +601,6 @@ func TestBuildFetchBodyIncludesFetchExtraParamByDefault(t *testing.T) {
 	}
 }
 
-func TestDocsScriptFetchDoesNotEnableComments(t *testing.T) {
-	t.Parallel()
-
-	body := docsScriptFetchBody(newFetchBodyTestRuntime(context.Background()))
-	var extra map[string]bool
-	if err := json.Unmarshal([]byte(body.ExtraParam), &extra); err != nil {
-		t.Fatalf("decode docs +script extra_param: %v", err)
-	}
-	if _, ok := extra["include_comments"]; ok {
-		t.Fatalf("docs +script must keep its existing comment-free request: %#v", extra)
-	}
-}
-
 func TestBuildFetchBodyIncludesCommentsForEveryDocumentFormat(t *testing.T) {
 	t.Parallel()
 

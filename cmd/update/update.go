@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	stdio "io"
+	"os"
 	"runtime"
 	"strings"
 
@@ -86,11 +87,12 @@ func symArrow() string {
 
 // UpdateOptions holds inputs for the update command.
 type UpdateOptions struct {
-	Factory      *cmdutil.Factory
-	JSON         bool
-	Force        bool
-	Check        bool
-	SkillsLayout string
+	Factory       *cmdutil.Factory
+	JSON          bool
+	Force         bool
+	UpstreamForce bool
+	Check         bool
+	SkillsLayout  string
 }
 
 // NewCmdUpdate creates the update command.
@@ -119,6 +121,7 @@ The skill name "lark-suite" is reserved for CLI-managed suite layout.`,
 	cmdutil.DisableAuthCheck(cmd)
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "structured JSON output")
 	cmd.Flags().BoolVar(&opts.Force, "force", false, "force reinstall even if already up to date")
+	cmd.Flags().BoolVar(&opts.UpstreamForce, "upstream-force", false, "allow replacing local larkx build with upstream lark-cli binary")
 	cmd.Flags().BoolVar(&opts.Check, "check", false, "only check for updates, do not install")
 	cmd.Flags().StringVar(&opts.SkillsLayout, "skills-layout", "", "skills layout: separate or suite")
 	cmdutil.SetRisk(cmd, "high-risk-write")
@@ -144,6 +147,12 @@ func updateRunWithContext(ctx context.Context, opts *UpdateOptions) error {
 			errs.NewValidationError(errs.SubtypeInvalidArgument, "--skills-layout cannot be used with --check").
 				WithParam("--skills-layout").
 				WithHint("Remove --skills-layout when using --check."))
+	}
+	if os.Getenv("LARKX_BINARY_GUARD") == "1" && !opts.Check && !opts.UpstreamForce && os.Getenv("LARKX_ALLOW_UPSTREAM_UPDATE") != "1" {
+		return reportError(opts, io, "validation",
+			errs.NewValidationError(errs.SubtypeFailedPrecondition,
+				"refusing to overwrite custom larkx binary with upstream lark-cli release").
+				WithHint("Rebuild from your larkx repository (`git pull && make install-local`), or pass `--upstream-force` if you explicitly want to replace it with upstream."))
 	}
 	src, configErr := distribution.ResolveSource(ctx)
 	if configErr != nil {

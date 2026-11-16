@@ -1,8 +1,7 @@
-# docs +update（更新飞书云文档）
+# docs +update / docs push（更新飞书云文档）
 
-使用文本或 block 指令精确更新飞书云文档。默认使用 XML；仅在用户明确要求或必须保真 Markdown 时使用 Markdown。
-
-写入前必须按 `--doc-format` 读取对应格式参考：`xml` 读取 [`lark-doc-xml.md`](lark-doc-xml.md)，`markdown` 读取 [`lark-doc-md.md`](lark-doc-md.md)；
+- **整篇或文末同步标准 Markdown**：优先用 `larkx docs push <file.md> --doc "<URL 或 token>" [--mode overwrite|append]`。
+- **文本替换或精确块级修改**：使用 `docs +update`。写入 XML 或 Markdown 时可按需查阅 [`lark-doc-xml.md`](lark-doc-xml.md) 或 [`lark-doc-md.md`](lark-doc-md.md)。
 
 ## 常用示例
 

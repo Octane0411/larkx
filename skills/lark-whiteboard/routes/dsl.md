@@ -2,84 +2,44 @@
 
 > **这是画板，不是网页。** 画板是无限画布上自由放置元素，flex 布局是可选增强。
 
-## Workflow
+## 步骤概览
 
 ```
-Step 1: 路由 & 读取知识
-  - 读对应 scene 指南 — 了解结构特征和布局策略
-  - 确定布局策略（见下方快速判断）和构建方式
-  - 读 elements/ 核心模块 — 语法、布局、配色、排版、连线
+Step 1: 读取元素语法参考
+  - 读 elements/ 模块 — schema、layout、connectors、typography、image
 
-Step 2: 生成完整 DSL（含颜色）
-  - 按 content.md 规划信息量和分组
+Step 2: 生成完整 DSL JSON
   - 按 layout.md 选择布局模式和间距
-  - 推荐使用图标让图表更直观，运行 `npx -y @larksuite/whiteboard-cli@^0.2.13 --icons` 查看可用图标
-  - 按 style.md 上色（用户没指定时用默认经典色板）
-  - 按 schema.md 语法输出完整 JSON
-  - 连线参考 connectors.md，排版参考 typography.md
+  - 查看可用图标：`npx -y @larksuite/whiteboard-cli@^0.2.13 --icons`
+  - 按 schema.md 语法输出完整 JSON，连线参考 connectors.md，排版参考 typography.md
+  - 复杂生成逻辑建议保存为 `.cjs` 脚本执行产出 diagram.json
 
-  注意：部分图形（鱼骨/飞轮/柱状/折线等）要按 scene 指南的脚本模板写 CommonJS 脚本生成 JSON：
-    1. 创建产物目录 ./diagrams/YYYY-MM-DDTHHMMSS/
-    2. 将脚本保存为 diagram.gen.cjs（必须 .cjs 后缀，脚本用 require() 写，.js 在 ESM 项目下会崩），执行 node diagram.gen.cjs 产出 diagram.json
-    3. 用产出的 diagram.json 进入 Step 3
-
-Step 3: 渲染 & 审查 → 交付
-  - 渲染前自查（见下方检查清单）
-  - 渲染 PNG（仅用于预览验证，不是最终产物）：npx -y @larksuite/whiteboard-cli@^0.2.13 -i diagram.json -o diagram.png
-  - 检查：信息完整？布局合理？配色协调？文字无截断？连线无交叉？
-  - 有问题 → 按症状表修复 → 重新渲染（最多 2 轮）
-  - 2 轮后仍有严重问题 → 考虑走 Mermaid 路径兜底
-  - 写入画板：用 whiteboard-cli 将 diagram.json 转换为 OpenAPI 格式并 pipe 给 +update：
+Step 3: 渲染验证 & 写入画板
+  - 本地渲染预览图（仅用于校验）：`npx -y @larksuite/whiteboard-cli@^0.2.13 -i diagram.json -o diagram.png`
+  - 转换为 OpenAPI 格式并 pipe 给 `+update`：
       npx -y @larksuite/whiteboard-cli@^0.2.13 -i diagram.json --to openapi --format json \
         | lark-cli whiteboard +update --whiteboard-token <board_token> \
             --source - --input_format raw --idempotent-token <时间戳+标识> --as user
-      → 完整 dry-run / 确认流程见 [§ 写入画板](../references/lark-whiteboard-workflow.md#写入画板)
-  - 交付：向用户报告 board_token 写入成功
 ```
 
 **布局策略快速判断**（详见 `elements/layout.md`）：
 
 先定**主布局**，再定子布局：**结构化信息**优先用 Flex，**关系链路**优先用 Dagre，**灵活定位**用绝对布局。
 
-> **构建方式是强约束**：当 scene 指南要求"脚本生成"时，必须先写脚本（`.cjs`，CommonJS）并用 `node` 执行来产出 JSON 文件。
+> **构建方式说明**：当使用脚本生成 JSON 时，建议使用 `.cjs`（CommonJS）并用 `node` 执行产出 JSON 文件。
 
 ## 模块索引
 
-### 核心参考（必读）
+### 核心参考
 
 | 模块     | 文件                         | 说明                            |
 | -------- |----------------------------| ------------------------------- |
 | DSL 语法 | `elements/schema.md`       | 节点类型、属性、尺寸值          |
-| 内容规划 | `elements/content.md`    | 信息提取、密度决策、连线预判    |
+| 信息密度 | `elements/content.md`    | 信息组织、分组与精简参考        |
 | 布局系统 | `elements/layout.md`     | 网格方法论、Flex 映射、间距规则 |
 | 排版规则 | `elements/typography.md` | 字号层级、对齐、行距            |
 | 连线系统 | `elements/connectors.md` | 拓扑规划、锚点选择              |
-| 配色系统 | `elements/style.md`      | 多色板、视觉层级                |
-
-### 场景指南（按类型选读一个）
-
-| 图表类型    | 文件                     | 适用场景                               |
-| ----------- | ------------------------ | -------------------------------------- |
-| 架构图      | `scenes/architecture.md` | 分层架构、微服务架构                   |
-| 组织架构图  | `scenes/organization.md` | 公司组织、树形层级                     |
-| 泳道图      | `scenes/swimlane.md`     | 跨角色流程、跨系统交互流程             |
-| 对比图      | `scenes/comparison.md`   | 方案对比、功能矩阵                     |
-| 鱼骨图      | `scenes/fishbone.md`     | 因果分析、根因分析                     |
-| 柱状图      | `scenes/bar-chart.md`    | 柱状图、条形图                         |
-| 折线图      | `scenes/line-chart.md`   | 折线图、趋势图                         |
-| 树状图      | `scenes/treemap.md`      | 矩形树图、层级占比                     |
-| 漏斗图      | `scenes/funnel.md`       | 转化漏斗、销售漏斗                     |
-| 金字塔图    | `scenes/pyramid.md`      | 层级结构、需求层次                     |
-| 循环/飞轮图 | `scenes/flywheel.md`     | 增长飞轮、闭环链路                     |
-| 里程碑      | `scenes/milestone.md`    | 时间线、版本演进                       |
-| 流程图      | `scenes/flowchart.md`    | 业务流、状态机、带条件判断的链路       |
-
-### 插入 @用户提及 / 图片
-
-| 当前内容包含 | 必读指南 |
-|---|---|
-| @用户提及 | [`../scenes/mention.md`](../scenes/mention.md) |
-| 图片 / 配图 | [`../scenes/photo-showcase.md`](../scenes/photo-showcase.md) |
+| 图片元素 | `elements/image.md`      | 图片节点写法与约束              |
 
 ## 渲染前自查
 

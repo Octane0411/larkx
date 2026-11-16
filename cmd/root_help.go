@@ -141,7 +141,7 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 // extension each time the template is rendered.
 const skillsSetupFooter = `{{if not .HasParent}}
 
-Skills setup (one-time, humans): npx skills add larksuite/cli -g -y — %s{{end}}`
+Docs Markdown sync: larkx docs push <file.md> [--doc <url>] | larkx docs pull <url> -o <file.md> — %s{{end}}`
 
 func renderRootUsageTemplate(plan *surface.Plan) string {
 	var b strings.Builder

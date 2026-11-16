@@ -1,347 +1,131 @@
-# lark-cli
+# larkx
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Go Version](https://img.shields.io/badge/go-%3E%3D1.23-blue.svg)](https://go.dev/)
-[![npm version](https://img.shields.io/npm/v/@larksuite/cli.svg)](https://www.npmjs.com/package/@larksuite/cli)
+> A cleaner, Markdown-first build of [larksuite/cli](https://github.com/larksuite/cli) (`lark-cli`).
 
-[中文版](./README.zh.md) | [English](./README.md)
+`larkx` 基于官方开源仓库 [github.com/larksuite/cli](https://github.com/larksuite/cli)（MIT License，基于提交 [`3d82c85419ad7560ad017db7a3972a596b5fbeb1`](https://github.com/larksuite/cli/commit/3d82c85419ad7560ad017db7a3972a596b5fbeb1)）分支演进，保留全部 18+ 业务域能力，**直接复用现有的 `~/.lark-cli` 配置与系统钥匙串登录态（无需重新扫码登录）**，并重点解决原版 CLI 的两类痛点：
 
-The official [Lark/Feishu](https://www.larksuite.com/) CLI tool, maintained by the [larksuite](https://github.com/larksuite) team — built for humans and AI Agents. Covers core business domains including Messenger, Docs, Base, Sheets, Slides, Calendar, Mail, Tasks, Meetings, Markdown, and more, with 200+ commands and 26 AI Agent [Skills](./skills/).
+1. **剔除冗长流程与文体污染**：移除 `docs +script`（`init-draft` / 手写 XML / 删除草稿目录）以及 `lark-doc-create-workflow`、体裁契约、Slides「豆包设计原则」/ 规划层、Sheets 视觉规范、IM 卡片风格指南、Whiteboard 创作工作流等主观/模板化 prompt，仅保留客观 API 与语法说明，避免干扰 Agent 或模型自身文风。
+2. **标准 Markdown 一键无损同步（`docs push` / `docs pull`）**：
+   - 支持任意工作目录外的本地图片（相对源 `.md` 文件路径、`../`、绝对路径、`file://` URL），自动校验安全黑名单、解码尺寸、上传至云盘媒体库并绑定；
+   - 自动从 YAML frontmatter `title` 或首个 `# H1` 提取 `<title>` 并去重（可通过 `--keep-h1` 保留正文标题）；
+   - 自动保护 fenced/inline 代码块、`$...$` / `$$...$$` 公式与 `\$` 货币符号、表格 `<br/>` 与 `<https://...>` 自动链接，并将正文裸 `<tag>` 转义为 `\<tag>`，防止被 `docs_ai` 误解析吞字；
+   - `docs pull` 自动清除 `docs_ai` 导出时的多余反斜杠转义（保留 `\\` 与 `\$`）、还原 `# 标题`，可选 `--download-media` 一键拉取图片并重写本地相对链接。
 
-[Install](#installation--quick-start) · [AI Agent Skills](#agent-skills) · [Auth](#authentication) · [Commands](#three-layer-command-system) · [Advanced](#advanced-usage) · [Enterprise](#personal-or-enterprise) · [Security](#security--risk-warnings-read-before-use) · [Contributing](#contributing)
+---
 
-## Why lark-cli?
+## 快速安装
 
-- **Agent-Native Design** — 24 structured [Skills](./skills/) out of the box, compatible with popular AI tools — Agents can operate Lark with zero extra setup
-- **Wide Coverage** — 18 business domains, 200+ curated commands, 26 AI Agent [Skills](./skills/)
-- **AI-Friendly & Optimized** — Every command is tested with real Agents, featuring concise parameters, smart defaults, and structured output to maximize Agent call success rates
-- **Open Source, Zero Barriers** — MIT license, ready to use, just `npm install`
-- **Up and Running in 3 Minutes** — One-click app creation, interactive login, from install to first API call in just 3 steps
-- **Secure & Controllable** — Input injection protection, terminal output sanitization, OS-native keychain credential storage
-- **Three-Layer Architecture** — Shortcuts (human & AI friendly) → API Commands (platform-synced) → Raw API (full coverage), choose the right granularity
+### 前置依赖
 
-## Personal or Enterprise?
+- Go `>= 1.23`（具体版本以 `go.mod` 为准）
+- 已有可用的 `~/.lark-cli` 登录态（或按 [`README.upstream.md`](./README.upstream.md) 使用 `larkx config init` / `larkx auth login`）
 
-| You are... | Recommended path |
-| ---------- | ---------------- |
-| **An individual developer** — using lark-cli in your terminal or with your own AI Agent | Follow the [Quick Start](#installation--quick-start) below |
-| **Enterprise IT / ISV** — embedding lark-cli into your own Agent or platform, with centralized credentials (database / Vault / config center), unified audit logging, and a restricted command surface | Read [Embed lark-cli in your Agent](https://open.larksuite.com/document/mcp_open_tools/feishu-cli/embed-feishu-cli-in-agent) and the [`extension/`](./extension/) packages — extend via a wrapper `main`, no need to modify CLI source |
-
-> 💡 **For AI Agents:** append `.md` to any Open Platform doc URL to fetch it as raw Markdown, e.g. [`embed-feishu-cli-in-agent.md`](https://open.larksuite.com/document/mcp_open_tools/feishu-cli/embed-feishu-cli-in-agent.md).
-
-## Features
-
-| Category      | Capabilities                                                                                                                      |
-| ------------- |-----------------------------------------------------------------------------------------------------------------------------------|
-| 📅 Calendar   | View, create and update events, invite attendees, find meeting rooms, RSVP to invitations, check free/busy & time suggestions     |
-| 💬 Messenger  | Send/reply messages, create and manage group chats, view chat history & threads, search messages, download media                  |
-| 📄 Docs       | Create, read, update, and search documents, read/write media & whiteboards                                                        |
-| 📁 Drive      | Upload and download files, search docs & wiki, manage comments                                                                    |
-| 📝 Markdown   | Create, fetch, patch, and overwrite Drive-native `.md` files                                                                      |
-| 📊 Base       | Create and manage tables, fields, records, views, dashboards, workflows, forms, roles & permissions, data aggregation & analytics |
-| 📈 Sheets     | Create, read, write, append, find, and export spreadsheet data                                                                    |
-| 🖼️ Slides     | Create and manage presentations, read presentation content, and add or remove slides                                              |
-| ✅ Tasks      | Create, query, update, and complete tasks; manage task lists, subtasks, comments & reminders                                      |
-| 📚 Wiki       | Create and manage knowledge spaces, nodes, and documents                                                                          |
-| 👤 Contact    | Search users by name/email/phone, get user profiles                                                                               |
-| 📧 Mail       | Browse, search, read emails, send, reply, forward, manage drafts, watch new mail                                                  |
-| 🎥 Meetings   | Search live and historical meetings, inspect participants and artifacts, analyze transcripts, manage Minutes, and assist in meetings |
-| 🕐 Attendance | Query personal attendance check-in records                                                                                        |
-| ✍️ Approval   | Query approval tasks, approve/reject/transfer tasks, cancel and CC instances                                                      |
-| 🎯 OKR        | Query, create, update OKRs; manage objective & key results, alignments, indicators and progress.                                  |
-| 📋 Project    | Meegle — manage work items, schedules, and data via the standalone [meegle-cli](https://github.com/larksuite/meegle-cli) (install separately) |
-| 🔗 Apps       | Create Spark/Miaoda apps, publish HTML/static sites, run cloud generation, and manage access scope                                 |
-
-## Installation & Quick Start
-
-### Requirements
-
-Before you start, make sure you have:
-
-- Node.js (`npm`/`npx`)
-- Go `v1.23`+ and Python 3 (only required for building from source)
-
-### Quick Start (Human Users)
-
-> **Note for AI assistants:** If you are an AI Agent helping the user with installation, jump directly to [Quick Start (AI Agent)](#quick-start-ai-agent), which contains all the steps you need to complete.
-
-#### Install
-
-Choose **one** of the following methods:
-
-**Option 1 — From npm (recommended):**
+### 构建并安装到 `~/.local/bin/larkx`
 
 ```bash
-npx @larksuite/cli@latest install
+./scripts/install-local.sh
+# 或使用 Makefile：
+make install-local
 ```
 
-**Option 2 — From source:**
-
-Requires Go `v1.23`+ and Python 3.
+验证登录态复用（不修改原有 `/opt/homebrew/bin/lark-cli`）：
 
 ```bash
-git clone https://github.com/larksuite/cli.git
-cd cli
-make install
-
-# Install CLI SKILL (required)
-npx skills add larksuite/cli -y -g
+which larkx
+larkx --version
+larkx whoami
 ```
 
-#### Configure & Use
+---
+
+## 核心新增能力
+
+### 1. `docs push`（或 `docs +push`）— 标准 Markdown 推送到飞书文档
 
 ```bash
-# 1. Configure app credentials (one-time, interactive guided setup)
-lark-cli config init
+# 位置参数直接创建新文档（自动提取 # H1 / frontmatter title，上传相对路径或 file:// 图片）
+larkx docs push ./report.md
 
-# 2. Log in (--recommend auto-selects commonly used scopes)
-lark-cli auth login --recommend
+# 指定目标云盘文件夹或知识库链接
+larkx docs push /abs/path/spec.md --parent-token "https://example.feishu.cn/drive/folder/<token>"
 
-# 3. Start using
-lark-cli calendar +agenda
+# 覆盖更新或追加到已有文档
+larkx docs push ./spec.md --doc "https://example.feishu.cn/docx/<token>" --mode overwrite
+larkx docs push ./changelog.md --doc "<token>" --mode append
+
+# 从 stdin 读取并用 --dry-run 预览请求体
+cat notes.md | larkx docs push - --title "Meeting Notes" --dry-run
 ```
 
-## Quick Start (AI Agent)
+常用参数：
 
-> The following steps are for AI Agents. Some steps require the user to complete actions in a browser.
+| 参数 | 说明 |
+| --- | --- |
+| `<file.md>` / `--file` | 本地 `.md` 文件路径（或 `-` 读取 stdin） |
+| `--content` | 内联 Markdown 字符串（支持 `@file` / `-`） |
+| `--doc` | 目标文档 URL/token（省略则创建新文档） |
+| `--mode` | 更新模式：`overwrite`（默认）\| `append` |
+| `--title` | 显式指定文档标题（优先级高于 frontmatter 与 `# H1`） |
+| `--keep-h1` | 在正文中同时保留首个 `# H1` |
+| `--keep-frontmatter` | 在正文中保留 YAML frontmatter |
+| `--allow-xml-tags` | 透传原始 DocxXML 标签而不转义正文裸 `<` |
+| `--parent-token` | 新建文档的目标文件夹 / Wiki URL 或 token |
 
-**Step 1 — Install**
+### 2. `docs pull`（或 `docs +pull`）— 拉取为干净本地 Markdown
 
 ```bash
-npx @larksuite/cli@latest install
+# 输出纯 Markdown 到 stdout（方便管道重定向）
+larkx docs pull "https://example.feishu.cn/docx/<token>" > spec.md
+
+# 原子写入文件并下载文档内图片到 spec.assets/
+larkx docs pull "https://example.feishu.cn/docx/<token>" -o ./spec.md --download-media
+
+# 保留服务端原始导出格式不做反转义
+larkx docs pull "<token>" --raw
 ```
 
-**Step 2 — Configure app credentials**
+### 3. `larkx takeover` — 可选软链托管 `lark-cli`
 
-> Run this command in the background. It will output an authorization URL — extract it and send it to the user. The command exits automatically after the user completes the setup in the browser.
+当已安装的 Agent/脚本硬编码调用 `lark-cli` 时，可用内置命令在 `~/.local/bin/lark-cli` 建立指向 `larkx` 的软链（绝不覆盖 `/opt/homebrew/bin/lark-cli` 等真实二进制文件）：
 
 ```bash
-lark-cli config init --new
+larkx takeover status   # 查看当前软链与 PATH 优先级
+larkx takeover enable   # 创建 ~/.local/bin/lark-cli -> ~/.local/bin/larkx
+larkx takeover disable  # 仅移除指向 larkx 的托管软链
 ```
 
-**Step 3 — Login**
+### 4. 默认安静与防覆盖保护
 
-> Same as above: run in the background, extract the authorization URL and send it to the user.
+- 默认设置 `LARKSUITE_CLI_NO_UPDATE_NOTIFIER=1` 与 `LARKSUITE_CLI_NO_SKILLS_NOTIFIER=1`，去除输出中的 `_notice` 升级提示噪音（如需开启可设置 `LARKX_ENABLE_UPSTREAM_NOTIFIERS=1`）。
+- `larkx update` 默认开启自保护（`LARKX_BINARY_GUARD=1`），拒绝被上游 `lark-cli` 发布包直接覆盖当前二进制；`larkx update --check` 仍可用，确需强制替换需显式传 `--upstream-force`。
+
+---
+
+## 开发、测试与构建
 
 ```bash
-lark-cli auth login --recommend
+# 代码格式与静态检查
+gofmt -l .
+go vet ./...
+
+# 运行核心测试（含 skills 纯净度校验、Markdown 同步与 takeover 单测）
+go test -count=1 . ./shortcuts/doc/... ./cmd/... ./internal/skillscheck/... ./internal/vfs/localfileio/...
+
+# 全量构建
+make build
 ```
 
-**Step 4 — Verify**
+---
+
+## 与上游保持同步
+
+上游原版文档与完整说明保留在 [`README.upstream.md`](./README.upstream.md)。本仓库将上游配置为只读 `upstream` remote（禁用 push）：
 
 ```bash
-lark-cli auth status
+git fetch upstream
+git rebase upstream/main
 ```
-
-## Agent Skills
-
-| Skill                           | Description                                                                                                    |
-| ------------------------------- |----------------------------------------------------------------------------------------------------------------|
-| `lark-shared`                   | App config, auth login, identity switching, scope management, security rules (auto-loaded by all other skills) |
-| `lark-calendar`                 | Calendar events (create/update), agenda view, free/busy queries, time suggestions, room finding, RSVP replies  |
-| `lark-im`                       | Send/reply messages, group chat management, message search, upload/download images & files, reactions          |
-| `lark-doc`                      | Create, read, update, search documents (Markdown-based)                                                        |
-| `lark-drive`                    | Upload, download files, manage permissions & comments                                                          |
-| `lark-markdown`                 | Create, fetch, patch, and overwrite Drive-native Markdown files                                                |
-| `lark-sheets`                   | Create, read, write, append, find, export spreadsheets                                                         |
-| `lark-slides`                   | Create and manage presentations, read presentation content, and add or remove slides                          |
-| `lark-base`                     | Tables, fields, records, views, dashboards, data aggregation & analytics                                       |
-| `lark-task`                     | Tasks, task lists, subtasks, reminders, member assignment                                                      |
-| `lark-mail`                     | Browse, search, read emails, send, reply, forward, draft management, watch new mail                            |
-| `lark-contact`                  | Search users by name/email/phone, get user profiles                                                            |
-| `lark-wiki`                     | Knowledge spaces, nodes, documents                                                                             |
-| `lark-event`                    | Real-time event subscriptions (WebSocket), regex routing & agent-friendly format                               |
-| `lark-meeting`                  | Search live or historical meetings, inspect participants and artifacts, analyze transcripts, manage Minutes, and assist in meetings |
-| `lark-whiteboard`               | Whiteboard/chart DSL rendering                                                                                 |
-| `lark-openapi-explorer`         | Explore underlying APIs from official docs                                                                     |
-| `lark-skill-maker`              | Custom skill creation framework                                                                                |
-| `lark-attendance`               | Query personal attendance check-in records                                                                     |
-| `lark-approval`                 | Query approval tasks, approve/reject/transfer tasks, cancel and CC instances                                   |
-| `lark-workflow-meeting-summary` | Workflow: meeting minutes aggregation & structured report                                                      |
-| `lark-workflow-standup-report`  | Workflow: agenda & todo summary                                                                                |
-| `lark-okr`                      | Query, create, update OKRs; manage objective & key results, alignments and indicators.                         |
-
-## Authentication
-
-| Command       | Description                                                    |
-| ------------- | -------------------------------------------------------------- |
-| `auth login`  | OAuth login with interactive selection or CLI flags for scopes |
-| `auth logout` | Sign out and remove stored credentials                         |
-| `auth status` | Show current login status and granted scopes                   |
-| `auth check`  | Verify a specific scope (exit 0 = ok, 1 = missing)            |
-| `auth scopes` | List all available scopes for the app                          |
-| `auth list`   | List all authenticated users                                   |
-
-```bash
-# Interactive login (TUI guides domain and permission level selection)
-lark-cli auth login
-
-# Filter by domain
-lark-cli auth login --domain calendar,task
-
-# Recommended auto-approval scopes
-lark-cli auth login --recommend
-
-# Exact scope
-lark-cli auth login --scope "calendar:calendar:read"
-
-# Agent mode: return verification URL immediately, non-blocking
-lark-cli auth login --domain calendar --no-wait
-# Resume polling later
-lark-cli auth login --device-code <DEVICE_CODE>
-
-# DPoP (Demonstrating Proof of Possession) is enabled in preferred mode by default for new local credentials
-lark-cli config set dpop preferred
-# Or disable DPoP
-lark-cli config set dpop disabled
-# Or require DPoP without Bearer fallback
-lark-cli config set dpop required
-# Re-authorize after choosing a different policy
-lark-cli auth login
-
-# Identity switching: execute commands as user or bot
-lark-cli calendar +agenda --as user
-lark-cli im +messages-send --as bot --chat-id "oc_xxx" --text "Hello"
-```
-
-## Three-Layer Command System
-
-The CLI provides three levels of granularity, covering everything from quick operations to fully custom API calls:
-
-### 1. Shortcuts
-
-Prefixed with `+`, designed to be friendly for both humans and AI, with smart defaults, table output, and dry-run previews.
-
-```bash
-lark-cli calendar +agenda
-lark-cli im +messages-send --chat-id "oc_xxx" --text "Hello"
-lark-cli docs +create --doc-format markdown --content $'<title>Weekly Report</title>\n# Progress\n- Completed feature X'
-```
-
-Run `lark-cli <service> --help` to see all shortcut commands.
-
-### 2. API Commands
-
-Auto-generated from Lark OAPI metadata, curated through evaluation and quality gates — 100+ commands mapped 1:1 to platform endpoints.
-
-```bash
-lark-cli calendar calendars list
-lark-cli calendar events instance_view --params '{"calendar_id":"primary","start_time":"1700000000","end_time":"1700086400"}'
-```
-
-### 3. Raw API Calls
-
-Call any Lark Open Platform endpoint directly, covering 2500+ APIs.
-
-```bash
-lark-cli api GET /open-apis/calendar/v4/calendars
-lark-cli api POST /open-apis/im/v1/messages --params '{"receive_id_type":"chat_id"}' --data '{"receive_id":"oc_xxx","msg_type":"text","content":"{\"text\":\"Hello\"}"}'
-```
-
-## Advanced Usage
-
-### Output Formats
-
-```bash
---format json      # Full JSON response (default)
---format pretty    # Human-friendly formatted output
---format table     # Readable table
---format ndjson    # Newline-delimited JSON (for piping)
---format csv       # Comma-separated values
-```
-
-### JSON Output Contract
-
-With `--format json` (the default), success and error envelopes are distinct.
-
-Success goes to **stdout**, exit code `0`:
-
-```json
-{ "ok": true, "identity": "user", "data": { "guid": "..." }, "meta": { "count": 1 } }
-```
-
-Errors go to **stderr**, non-zero exit code:
-
-```json
-{ "ok": false, "identity": "user", "error": { "type": "api", "subtype": "...", "code": 99991679, "message": "...", "hint": "..." } }
-```
-
-To check whether a command succeeded, test `ok == true` (or the exit code) — **not** `code == 0`. Unlike raw OpenAPI responses (`{"code": 0, "msg": "ok", ...}`), the success envelope carries no `code` or `msg` field; `code` appears only inside `error` as the upstream OpenAPI code. See [errs/ERROR_CONTRACT.md](errs/ERROR_CONTRACT.md) for the full error taxonomy.
-
-### Pagination
-
-```bash
---page-all                  # Auto-paginate through all pages
---page-limit 5              # Max 5 pages
---page-delay 500            # 500ms between page requests
-```
-
-### Dry Run
-
-For commands that may have side effects, preview the request with --dry-run first:
-
-```bash
-lark-cli im +messages-send --chat-id oc_xxx --text "hello" --dry-run
-```
-
-### Schema Introspection
-
-Use schema to inspect any API method's parameters, request body, response structure, supported identities, and scopes:
-
-```bash
-lark-cli schema
-lark-cli schema calendar.events.instance_view
-lark-cli schema im.messages.delete
-```
-
-## Security & Risk Warnings (Read Before Use)
-
-This tool can be invoked by AI Agents to automate operations on the Lark/Feishu Open Platform, and carries inherent risks such as model hallucinations, unpredictable execution, and prompt injection. After you authorize Lark/Feishu permissions, the AI Agent will act under your user identity within the authorized scope, which may lead to high-risk consequences such as leakage of sensitive data or unauthorized operations. Please use with caution.
-
-To reduce these risks, the tool enables default security protections at multiple layers. However, these risks still exist. We strongly recommend that you do not proactively modify any default security settings; once relevant restrictions are relaxed, the risks will increase significantly, and you will bear the consequences.
-
-We recommend using the Lark/Feishu bot integrated with this tool as a private conversational assistant. Do not add it to group chats or allow other users to interact with it, to avoid abuse of permissions or data leakage.
-
-To reduce the security risks associated with access token theft, the CLI sends a minimal set of risk-control signals with OpenAPI requests made to exact official Feishu/Lark HTTPS domains. These signals are used to help identify anomalous API activity. This protection is enabled by default. The information sent is limited to:
-
-- Operating system type: macOS, Windows, or Linux
-- Device hardware model: for example, Mac17,9
-
-To disable this protection for the current workspace, run:
-
-```bash
-lark-cli config risk-control off
-```
-
-To enable this protection for the current workspace, run:
-
-```bash
-lark-cli config risk-control on
-```
-
-To restore the default policy for the current workspace, run:
-
-```bash
-lark-cli config risk-control default
-```
-
-Please fully understand all usage risks. By using this tool, you are deemed to voluntarily assume all related responsibilities.
-
-## Contributing
-
-Community contributions are welcome! If you find a bug or have feature suggestions, please submit an [Issue](https://github.com/larksuite/cli/issues) or [Pull Request](https://github.com/larksuite/cli/pulls).
-
-For major changes, we recommend discussing with us first via an Issue.
-
-Before opening a PR, see [AGENTS.md](./AGENTS.md) for the local build, test, and PR checklist used by contributors and AI agents.
 
 ## License
 
-This project is licensed under the **MIT License**.
-When running, it calls Lark/Feishu Open Platform APIs. To use these APIs, you must comply with the following agreements and privacy policies:
-
-- [Feishu User Terms of Service](https://www.feishu.cn/terms)
-- [Feishu Privacy Policy](https://www.feishu.cn/privacy)
-- [Feishu Open Platform App Service Provider Security Management Specifications](https://open.feishu.cn/document/uAjLw4CM/uMzNwEjLzcDMx4yM3ATM/management-practice/app-service-provider-security-management-specifications)
-- [Lark User Terms of Service](https://www.larksuite.com/user-terms-of-service)
-- [Lark Privacy Policy](https://www.larksuite.com/privacy-policy)
+遵循上游项目一致的 [MIT License](./LICENSE)。

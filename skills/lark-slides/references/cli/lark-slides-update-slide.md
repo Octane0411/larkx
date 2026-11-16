@@ -118,14 +118,14 @@ python3 "<lark-slides-skill-dir>/scripts/xml_lint.py" --input page.xml
 
 `summary.error_count` 必须为 0 才调接口；`warning_count > 0` 时写完要截图复核。
 
-写入成功后，必须回读整份演示文稿的最新 XML，而不是只相信写接口的成功响应：
+写入成功后，可回读演示文稿或目标页 XML 核对总页数、元素 id 和改动结果：
 
 ```bash
 lark-cli slides +xml-get --as user \
   --presentation "$PRES" --output readback.xml
 ```
 
-按当前已加载 `lark-slides/SKILL.md` 指向的 [validation-xml.md](../workflow/validation-xml.md) 完成验证：核对总页数、目标页和关键元素（包括需要保留的 ID、文本、背景与备注），并对回读 XML 运行同一版式 lint；发现差异时先停止后续写入并重新基于最新版处理。
+必要时可运行 `scripts/xml_lint.py` 检查越界与结构合法性。
 
 ## 成功输出
 
@@ -158,6 +158,6 @@ lark-cli slides +xml-get --as user \
 | 现象 | 原因 | 解决 |
 |------|------|------|
 | 3350001，原因包含 `not found` | `--presentation` 不匹配，或 `--slide-id` 对应的页面已被删除 | 检查 `--presentation` 和 `--slide-id`，再用 `slides +xml-get` 回读当前页面 ID |
-| 3350001，其他 invalid param | `--content` 的 XML 结构有问题（如 `<shape>` 缺 `<content/>`、包含服务端不支持的元素） | 按 [error-handling.md](../workflow/error-handling.md) 检查 `--content` 的 XML 结构 |
+| 3350001，其他 invalid param | `--content` 的 XML 结构有问题（如 `<shape>` 缺 `<content/>`、包含服务端不支持的元素） | 对照 [`xml-schema-quick-ref.md`](../xml/xml-schema-quick-ref.md) 或使用 `scripts/xml_lint.py` 检查 XML 结构 |
 | 3350002 not found | `--revision-id` 传了不存在的版本号 | 用 `-1` 或真实存在的 `revision_id` |
 | 1061004 / 403 | 当前身份对这份 PPT 没有编辑权限 | 检查是否拥有 `slides:presentation:update` 或 `slides:presentation:write_only` scope；wiki 链接另需 `wiki:node:read`，`@` 占位符另需 `docs:document.media:upload`；`--as bot` 还要求该 bot 对目标 PPT 有编辑权限 |

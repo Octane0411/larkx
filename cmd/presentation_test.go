@@ -210,7 +210,7 @@ func TestPresentationDropsRootSkillsFooterWithSkillsRead(t *testing.T) {
 	applyPresentationAffordances(root, surface.NewPlan(map[surface.CommandID]surface.CommandState{
 		surface.CommandSkillsRead: surface.CommandConcealed,
 	}))
-	if strings.Contains(root.UsageTemplate(), "Skills setup (one-time, humans)") {
+	if strings.Contains(root.UsageTemplate(), "Docs Markdown sync:") {
 		t.Fatalf("concealed skills/read left the root skills footer:\n%s", root.UsageTemplate())
 	}
 }
@@ -356,6 +356,7 @@ func TestConcealedBuildOmitsEmptyRootGroup(t *testing.T) {
 		"profile", "profile/**",
 		"doctor",
 		"update",
+		"takeover", "takeover/**",
 	}, nil)
 
 	_, root, _ := buildInternal(

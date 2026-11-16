@@ -17,15 +17,16 @@ const (
 
 // Flag describes a CLI flag for a shortcut.
 type Flag struct {
-	Name     string   // canonical flag name (e.g. "calendar-id")
-	Aliases  []string // exact semantic synonyms accepted at parse time; hidden from human help, exported in machine metadata
-	Type     string   // "string" (default) | "bool" | "int" | "float64" | "int_array" | "string_array" | "string_slice"
-	Default  string   // default value as string
-	Desc     string   // help text
-	Hidden   bool     // hidden from --help, still readable at runtime
-	Required bool
-	Enum     []string // allowed values (e.g. ["asc", "desc"]); empty means no constraint
-	Input    []string // extra input sources: File (@path), Stdin (-); empty = flag value only
+	Name      string   // canonical flag name (e.g. "calendar-id")
+	Shorthand string   // optional single-character shorthand (e.g. "o")
+	Aliases   []string // exact semantic synonyms accepted at parse time; hidden from human help, exported in machine metadata
+	Type      string   // "string" (default) | "bool" | "int" | "float64" | "int_array" | "string_array" | "string_slice"
+	Default   string   // default value as string
+	Desc      string   // help text
+	Hidden    bool     // hidden from --help, still readable at runtime
+	Required  bool
+	Enum      []string // allowed values (e.g. ["asc", "desc"]); empty means no constraint
+	Input     []string // extra input sources: File (@path), Stdin (-); empty = flag value only
 }
 
 // Shortcut represents a high-level CLI command.

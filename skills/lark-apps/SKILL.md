@@ -33,8 +33,8 @@ lark-cli auth login --domain apps
 | 查单个应用详情（类型、名称、发布状态等） | `+get --app-id <app_id>` | [`lark-apps-get.md`](references/lark-apps-get.md) |
 | 改应用名、描述或图标（图标优先 `--icon-file` 传本地 png/jpeg；OpenClaw 类应用等类型不支持改图标） | `+update` | [`lark-apps-update.md`](references/lark-apps-update.md) |
 | 删除应用（是否可从 web 端「我的应用 → 回收站」恢复取决于结果里的 `in_trash=true`；CLI 无恢复命令） | `+delete --app-id <app_id> --confirm-name <name> --yes`（先 `+get` 向用户展示名称与 app_id、说明删除后可能进入回收站，也可能永久删除；恢复只在返回 `in_trash=true` 时成立；再等用户明确确认该应用；确认规则见下方「禁止预授权判定底线」②） | [`lark-apps-delete.md`](references/lark-apps-delete.md) |
-| HTML 应用 / 创意模式 — 写 HTML 页面/网站、静态页、PPT/deck、落地页、仪表盘、UI mockup、原型、线框图、视觉探索 | 加载 [`creative-design/creative-design.md`](creative-design/creative-design.md)（含完整开发与发布流程） | [`creative-design/creative-design.md`](creative-design/creative-design.md) |
-| 旧版存量 HTML 应用（无 Git 管理）继续上传已有静态产物 | `+html-publish`（仅兼容旧链路；新建 html / 创意模式 / creative-design 产物不得使用） | [`lark-apps-html-publish.md`](references/lark-apps-html-publish.md) |
+| HTML 应用 — 写静态 HTML 页面/网站 | `+create --app-type html` → `+init` → 在仓库根目录放置静态文件并提交推送，再用 `+release-create` 发布 | [`lark-apps-local-dev.md`](references/lark-apps-local-dev.md) |
+| 旧版存量 HTML 应用（无 Git 管理）继续上传已有静态产物 | `+html-publish`（仅兼容旧链路） | [`lark-apps-html-publish.md`](references/lark-apps-html-publish.md) |
 | 开发已有应用 / 初始化本地仓库（开发方式已定为本地后；先解析 app_id，勿 `+create` 新建） | `+init`（或手动 `+git-credential-init` + 原生 git）。**执行前必读** [`lark-apps-local-dev.md`](references/lark-apps-local-dev.md)，含端到端流程和领域规则 | [`lark-apps-init.md`](references/lark-apps-init.md), [`lark-apps-git-credential.md`](references/lark-apps-git-credential.md) |
 | 阅读 / 分析 / 总结一个妙搭应用的内容（任意应用模式，含创意模式应用的 `/page/<token>` 链接）；只要一份源码快照、不做本地开发；或要取**别人分享给你的**应用源码（你对其仓库无权限） | `+export`（下载 zip 后解压读源码；不配 git 凭证、不建工作区）。创意模式应用的 `/page/` 链接直接传 `--meta-token <token>`，不必先 `+get` 换 app_id。要继续开发用 `+init` 而非本命令 | [`lark-apps-export.md`](references/lark-apps-export.md) |
 | 本地开发时 `.env.local` 损坏/丢失，重新拉取启动期环境变量 | `+env-pull` | [`lark-apps-env-pull.md`](references/lark-apps-env-pull.md) |
@@ -102,7 +102,7 @@ lark-cli apps +member-settings-set --app-id <app_id> --external-access disabled 
 | 信号 | 判定 |
 |---|---|
 | 含数据库 / 后端持久化：登录 / 增删改查 / 报名·投票·站会存记录 / 多人协作 / 泛称"系统·工具"且明确要存数据 | `app_type=full_stack`；创建后用 `+features` 看 `database` 的 `enabled`，为 `false` 时按 [`lark-apps-features.md`](references/lark-apps-features.md) 用 `+feature-enable --feature database` 开数据库 |
-| 纯静态展示（给人"看"的物料，无 JS 交互）：PPT/deck / demo / 落地页 / 海报 / UI mockup / 线框图 / 静态仪表盘 / 视觉探索 | `app_type=html`，加载 [`creative-design/creative-design.md`](creative-design/creative-design.md)（含完整开发与发布流程） |
+| 纯静态展示（给人"看"的物料，无 JS 交互） | `app_type=html`，本地在仓库根目录放置静态 HTML 产物后提交推送并 `+release-create` |
 | 有 JS 交互但无数据库（给人"用"的前端应用）：可交互原型 / SPA / 表单校验 / 动态计算 / 调用外部 API / 泛称"工具·系统"但未明确要存数据 | `app_type=frontend`（**默认倾向**：用户未明确提出数据库需求时默认引导 frontend，不默认 full_stack） |
 | 类型模糊（尤其"要不要存数据"不清） | **追问**，话术偏向 frontend，例："看起来是个前端应用，需要保存数据吗？"；确认要存数据再转 full_stack，确认纯展示再转 html |
 | 用户要自己写 / 本地 IDE·code agent / 拉源码到本地 / 交研发 | 本地开发，读 [`lark-apps-local-dev.md`](references/lark-apps-local-dev.md) |

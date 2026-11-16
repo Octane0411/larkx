@@ -13,5 +13,6 @@ import (
 )
 
 func main() {
+	applyLarkxDefaults()
 	os.Exit(cmd.Execute())
 }

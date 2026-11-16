@@ -6,7 +6,7 @@
 
 ## 快速决策
 
-- 用户要**整理 / 盘点 / 归类 / 重构知识库、个人文档库、文档库目录或 Wiki 节点结构**，或要生成整理方案、目标目录树、移动计划时，不要只使用 Wiki 节点 API。必须先阅读 [`../lark-drive/references/lark-drive-workflow-knowledge-organize.md`](../lark-drive/references/lark-drive-workflow-knowledge-organize.md)，该 workflow 负责 Drive / Wiki / 个人文档库的统一入口解析、资源盘点、分类计划、写前确认和结果验证。
+- 用户要**整理或移动知识库节点**时：先盘点节点树并与用户确认目标结构，再使用 `wiki +node-create` / `wiki +move` / `wiki +move-to-drive` 等命令执行，不要未确认即批量移动。
 - 用户要把**已有 Wiki 节点移出知识库，放到 Drive 文件夹或“我的空间”根目录**：使用 `wiki +move-to-drive`，不要使用 `wiki +move` 或 `drive +move`。执行前确认源节点与目标位置。
 - 用户给的是知识库 URL（`.../wiki/<token>`），且后续要查成员/加成员/删成员：先确定下游成员操作的身份（默认 `user`；用户明确要求应用 / bot 视角时用 `bot`），再调用 `lark-cli wiki +node-get --node-token '<wiki_url>' --as user --format json`，从 `data.space_id` 获取空间 ID；下游使用 bot 时将示例中的身份改为 `--as bot`。节点解析与后续成员操作必须使用相同身份。
 - 用户要**删除**知识空间（`wiki +delete-space`）但只给了名称或 URL：**不能**把名称 / URL 原样传给 `--space-id`，必须先解析出真实 `space_id`。解析方式：

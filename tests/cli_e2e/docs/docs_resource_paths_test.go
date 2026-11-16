@@ -25,7 +25,6 @@ func TestDocsResourcePathsParseAndWriteDryRun(t *testing.T) {
 	writeLocalResourceFixture(t, draftDir, "attachment.txt", []byte("fixture attachment"))
 	writeLocalResourceFixture(t, draftDir, "diagram.svg", []byte(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100"/></svg>`))
 	writeLocalResourceFixture(t, draftDir, "widget.html", []byte(`<html><body>path fixture</body></html>`))
-	writeLocalResourceFixture(t, draftDir, ".presentation-decision.json", []byte(`{"visual_plan":{"blocks":[{"type":"whiteboard","min_count":1}]}}`))
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	t.Cleanup(cancel)
 	for _, mode := range []string{"xml directory fallback", "absolute"} {
@@ -39,23 +38,21 @@ func TestDocsResourcePathsParseAndWriteDryRun(t *testing.T) {
 			content := fmt.Sprintf(`<p>path fixture</p><img path="%s"/><source path="%s"/><whiteboard type="svg" path="%s"/><html5-block path="%s"/>`,
 				ref("image.png"), ref("attachment.txt"), ref("diagram.svg"), ref("widget.html"))
 			writeLocalResourceFixture(t, draftDir, "draft.xml", []byte(content))
-			for _, operation := range []string{"parse", "create", "update"} {
+			for _, operation := range []string{"create", "update"} {
 				t.Run(operation, func(t *testing.T) {
-					args := []string{"docs", "+script", "--command", "parse", "--content", "@./draft/draft.xml"}
-					if operation == "create" {
-						args = []string{"docs", "+create", "--content", "@./draft/draft.xml", "--dry-run"}
-					}
+					args := []string{"docs", "+create", "--content", "@./draft/draft.xml", "--dry-run"}
 					if operation == "update" {
 						args = []string{"docs", "+update", "--doc", "doxcnResourcePathFixture", "--command", "append", "--content", "@./draft/draft.xml", "--dry-run"}
 					}
-					result, err := clie2e.RunCmd(ctx, clie2e.Request{Args: args, DefaultAs: "bot", WorkDir: workDir, Env: docsScriptE2EEnv(t)})
+					result, err := clie2e.RunCmd(ctx, clie2e.Request{Args: args, DefaultAs: "bot", WorkDir: workDir, Env: map[string]string{
+						"LARKSUITE_CLI_APP_ID":     "docs-resource-paths-e2e",
+						"LARKSUITE_CLI_APP_SECRET": "secret",
+						"LARKSUITE_CLI_BRAND":      "feishu",
+						"LARKSUITE_CLI_CONFIG_DIR": t.TempDir(),
+					}})
 					require.NoError(t, err)
 					result.AssertExitCode(t, 0)
 					result.AssertStdoutStatus(t, true)
-					if operation == "parse" {
-						require.Equal(t, "passed", gjson.Get(result.Stdout, "data.assessment.status").String())
-						return
-					}
 					wantMethod := "POST"
 					wantPath := "/open-apis/docs_ai/v1/documents"
 					if operation == "update" {

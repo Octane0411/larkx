@@ -469,7 +469,7 @@ func TestDocsCreateV2EmptyContentFileReportsPathAndRecovery(t *testing.T) {
 	if got, want := problem.Message, `--content file "draft.xml" is empty`; got != want {
 		t.Fatalf("message = %q, want %q", got, want)
 	}
-	if got, want := problem.Hint, `write non-empty XML or Markdown to this file; if the path was reserved by init-draft, use the exact data.draft_path returned by that command, then retry with --content "@./<data.draft_path>"`; got != want {
+	if got, want := problem.Hint, `write non-empty XML or Markdown to this file, then retry with --content "@./<path>"`; got != want {
 		t.Fatalf("hint = %q, want %q", got, want)
 	}
 }

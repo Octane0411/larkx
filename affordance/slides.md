@@ -38,14 +38,12 @@
 
 ### Skills
 - lark-slides/references/cli/lark-slides-replace-slide.md
-- lark-slides/references/workflow/slides-editing.md
 - lark-slides/references/xml/xml-schema-quick-ref.md
 
 ## +update-slide
 
 ### Skills
 - lark-slides/references/cli/lark-slides-update-slide.md
-- lark-slides/references/workflow/slides-editing.md
 - lark-slides/references/xml/xml-schema-quick-ref.md
 
 ## +update
@@ -53,14 +51,12 @@ Hidden alias of [[+update-slide]]; kept so the shorter spelling resolves.
 
 ### Skills
 - lark-slides/references/cli/lark-slides-update-slide.md
-- lark-slides/references/workflow/slides-editing.md
 - lark-slides/references/xml/xml-schema-quick-ref.md
 
 ## +replace-pages
 
 ### Skills
 - lark-slides/references/cli/lark-slides-update-slide.md
-- lark-slides/references/workflow/slides-editing.md
 - lark-slides/references/xml/xml-schema-quick-ref.md
 
 ## +history-list
